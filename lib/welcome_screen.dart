@@ -16,15 +16,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void initState() {
     super.initState();
 
-    // Trigger fade-in animation
-    Future.delayed(const Duration(milliseconds: 200), () {
+    // Trigger animation after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         _opacity = 1.0;
       });
     });
 
-    // Navigate to Home after 2 seconds
-    Timer(const Duration(seconds: 2), () {
+    // Navigate after animation
+    Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -40,12 +40,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: AnimatedOpacity(
           opacity: _opacity,
           duration: const Duration(seconds: 1),
+          curve: Curves.easeInOut,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.credit_card, size: 100, color: Colors.white),
-              SizedBox(height: 20),
-              Text(
+            children: [
+              // 👉 Replace with your image asset or network image
+              Image.asset(
+                'images/one.jpeg',
+                width: 400,
+                height: 400,
+              ),
+              const SizedBox(height: 20),
+              const Text(
                 'One Card One Nation',
                 style: TextStyle(
                   fontSize: 28,
@@ -53,8 +59,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(color: Colors.white),
             ],
           ),
         ),
