@@ -16,14 +16,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void initState() {
     super.initState();
 
-    // Trigger animation after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         _opacity = 1.0;
       });
     });
 
-    // Navigate after animation
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
@@ -34,8 +32,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: Colors.indigo,
+      backgroundColor: Color(0xFF050238),
       body: Center(
         child: AnimatedOpacity(
           opacity: _opacity,
@@ -44,11 +44,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 👉 Replace with your image asset or network image
-              Image.asset(
-                'images/one.jpeg',
-                width: 400,
-                height: 400,
+              SizedBox(
+                height: screenHeight * 0.3,
+                child: Image.asset(
+                  'images/1.jpeg',
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(height: 20),
               const Text(

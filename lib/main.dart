@@ -16,7 +16,7 @@ class OneCardOneNationApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Roboto',
         brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF050238)),
         useMaterial3: true,
       ),
       home: const WelcomeScreen(),
