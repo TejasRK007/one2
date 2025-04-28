@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    kotlin("android") version "1.8.22" // Specify Kotlin version here
+    kotlin("android") version "2.1.0" // Specify Kotlin version here
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services") // Google services plugin
 }
