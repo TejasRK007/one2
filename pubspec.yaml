@@ -15,6 +15,12 @@ dependencies:
   permission_handler: ^11.3.0
   url_launcher: ^6.2.5
   animated_check: ^1.0.0
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.17.4
+  firebase_database: ^10.4.7
+  intl: ^0.18.1
+
+
 
 
 dev_dependencies:

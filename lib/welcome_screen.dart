@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'login_page.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -16,16 +16,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void initState() {
     super.initState();
 
+    // Fade-in effect after frame render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         _opacity = 1.0;
       });
     });
 
+    // Navigate to login after delay
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     });
   }
@@ -35,7 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Color(0xFF050238),
+      backgroundColor: const Color(0xFF050238),
       body: Center(
         child: AnimatedOpacity(
           opacity: _opacity,
@@ -44,24 +46,60 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
-                height: screenHeight * 0.3,
-                child: Image.asset(
-                  'images/1.jpeg',
-                  fit: BoxFit.contain,
+              // Logo or splash image
+              Container(
+                height: screenHeight * 0.28,
+                margin: const EdgeInsets.only(bottom: 30),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white38, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white24,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    )
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'images/1.jpeg',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+
+              // App Title
               const Text(
                 'One Card One Nation',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 30,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
+                  fontFamily: 'Roboto',
                 ),
               ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(color: Colors.white),
+
+              const SizedBox(height: 10),
+
+              const Text(
+                'Unified Digital Identity System',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Loading indicator
+              const CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.5,
+              ),
             ],
           ),
         ),

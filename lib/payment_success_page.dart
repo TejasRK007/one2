@@ -1,36 +1,56 @@
-//payment_success_page
 import 'package:flutter/material.dart';
+import 'home_screen.dart'; // Adjust the import path as needed
 
 class PaymentSuccessPage extends StatelessWidget {
-  final String amount;
+  final double amount;
+  final String username;
+  final String email;
+  final String phone;
+  final String password;
 
-  const PaymentSuccessPage({Key? key, required this.amount}) : super(key: key);
+  const PaymentSuccessPage({
+    Key? key,
+    required this.amount,
+    required this.username,
+    required this.email,
+    required this.phone,
+    required this.password,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Payment Success')),
+      appBar: AppBar(title: const Text('Payment Success')),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.check_circle_outline, size: 100, color: Colors.green),
-              SizedBox(height: 20),
-              Text(
-                'Payment of ₹$amount was successful!',
-                style: TextStyle(fontSize: 24),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-                child: Text('Back to Home'),
-                style: ElevatedButton.styleFrom(minimumSize: Size(200, 50)),
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 80),
+            const SizedBox(height: 20),
+            Text(
+              'Payment of ₹$amount was successful!',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HomeScreen(
+                      username: username,
+                      email: email,
+                      phone: phone,
+                      password: password,
+                    ),
+                  ),
+                      (route) => false,
+                );
+              },
+              child: const Text('Back to Home'),
+            ),
+          ],
         ),
       ),
     );
