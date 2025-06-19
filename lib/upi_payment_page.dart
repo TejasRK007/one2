@@ -10,6 +10,7 @@ class UPIPaymentPage extends StatefulWidget {
   final String email;
   final String phone;
   final String password;
+  final double? initialAmount;
 
   const UPIPaymentPage({
     Key? key,
@@ -20,6 +21,7 @@ class UPIPaymentPage extends StatefulWidget {
     required this.email,
     required this.phone,
     required this.password,
+    this.initialAmount,
   }) : super(key: key);
 
   @override
@@ -31,6 +33,14 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
   final _formKey = GlobalKey<FormState>();
   String errorMessage = '';
   bool isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialAmount != null) {
+      _amountController.text = widget.initialAmount!.toStringAsFixed(2);
+    }
+  }
 
   Future<void> submitAmount() async {
     if (!_formKey.currentState!.validate() || isSubmitting) return;
@@ -67,6 +77,17 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
       final updatedBalance = currentBalance - enteredAmount;
 
       await userRef.update({'balance': updatedBalance});
+
+      // Increment reward points and log history
+      final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+      final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+      final newPoints = currentPoints + 1;
+      await userRef.update({'rewardPoints': newPoints});
+      await userRef.child('rewardHistory').push().set({
+        'points': 1,
+        'timestamp': widget.timestamp,
+        'description': 'Earned for QR Payment',
+      });
 
       await userRef.child('transactions').push().set({
         'amount': enteredAmount,
@@ -106,6 +127,14 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
           key: _formKey,
           child: Column(
             children: [
+              if (widget.scannedData.isNotEmpty)
+                Column(
+                  children: [
+                    const Text('Payment For:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(widget.scannedData, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               Text('Card ID: ${widget.cardId}'),
               const SizedBox(height: 20),
               TextFormField(
@@ -122,6 +151,7 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
                   }
                   return null;
                 },
+                enabled: widget.initialAmount == null,
               ),
               const SizedBox(height: 20),
               ElevatedButton(

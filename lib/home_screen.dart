@@ -50,8 +50,18 @@ class _HomeScreenState extends State<HomeScreen> {
         phone: widget.phone,
         password: widget.password,
       ),
-      const RewardsPage(),
-      const HistoryPage(),
+      RewardsPage(
+        phone: widget.phone,
+        username: widget.username,
+        email: widget.email,
+        password: widget.password,
+      ),
+      HistoryPage(
+        phone: widget.phone,
+        username: widget.username,
+        email: widget.email,
+        password: widget.password,
+      ),
       ProfilePage(
         username: widget.username,
         email: widget.email,
