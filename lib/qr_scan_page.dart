@@ -9,6 +9,7 @@ class QRScanPage extends StatefulWidget {
   final String email;
   final String phone;
   final String password;
+  final String? upiPin;
 
   const QRScanPage({
     Key? key,
@@ -16,6 +17,7 @@ class QRScanPage extends StatefulWidget {
     required this.email,
     required this.phone,
     required this.password,
+    this.upiPin,
   }) : super(key: key);
 
   @override

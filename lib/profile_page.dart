@@ -49,8 +49,6 @@ class ProfilePage extends StatelessWidget {
             _profileTile("Password", password, Icons.lock),
             _profileTile("Email", email, Icons.email),
             _profileTile("Phone", phone, Icons.phone),
-            _profileTile("DOB", "16 April 2003", Icons.cake),
-            _profileTile("Gender", "Male", Icons.person_outline),
 
             const SizedBox(height: 20),
             _sectionTitle("Document Status"),

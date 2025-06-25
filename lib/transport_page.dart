@@ -2,9 +2,25 @@ import 'package:flutter/material.dart';
 import 'transport_fare_payment_page.dart';
 import 'package:flutter/services.dart';
 import 'upi_payment_page.dart';
+import 'metro_page.dart';
 
 class TransportPage extends StatefulWidget {
-  const TransportPage({super.key});
+  final String username;
+  final String email;
+  final String phone;
+  final String password;
+  final String? upiPin;
+  final void Function(String)? onPinSet;
+
+  const TransportPage({
+    super.key,
+    required this.username,
+    required this.email,
+    required this.phone,
+    required this.password,
+    this.upiPin,
+    this.onPinSet,
+  });
 
   @override
   State<TransportPage> createState() => _TransportPageState();
@@ -22,11 +38,6 @@ class _TransportPageState extends State<TransportPage> {
     'Nagpur', 'Chandigarh', 'Coimbatore', 'Kochi', 'Visakhapatnam', 'Goa',
     'Guwahati', 'Surat', 'Kanpur', 'Varanasi', 'Agra', 'Ludhiana', 'Nashik',
   ];
-
-  final String username = "DemoUser"; // Replace with real user values
-  final String email = "demo@example.com";
-  final String phone = "1234567890";
-  final String password = "demo123";
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +62,32 @@ class _TransportPageState extends State<TransportPage> {
         elevation: 0,
       ),
       body: Container(
-        color: const Color(0xFFF6F8FF),
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.tram),
+              label: const Text('Book Metro Ticket'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MetroPage(
+                      username: widget.username,
+                      email: widget.email,
+                      phone: widget.phone,
+                      password: widget.password,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                textStyle: const TextStyle(fontSize: 18),
+              ),
+            ),
+            const SizedBox(height: 16),
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -190,17 +223,23 @@ class _TransportPageState extends State<TransportPage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: () {
+                      final fareAmount = double.tryParse(option.fare.replaceAll('₹', '').trim());
+                      if (fareAmount == null) return; // Fare couldn't be parsed
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => UPIPaymentPage(
+                          builder: (_) => TransportFarePaymentPage(
+                            amount: fareAmount,
                             cardId: 'TRANSPORT',
                             scannedData: option.name,
                             timestamp: DateTime.now().toString(),
-                            username: username,
-                            email: email,
-                            phone: phone,
-                            password: password,
+                            username: widget.username,
+                            email: widget.email,
+                            phone: widget.phone,
+                            password: widget.password,
+                            upiPin: widget.upiPin,
+                            onPinSet: widget.onPinSet,
                           ),
                         ),
                       );

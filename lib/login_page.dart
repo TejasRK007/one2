@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+  const LoginPage({super.key, required this.isDarkMode, required this.onThemeChanged});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -34,6 +36,8 @@ class _LoginPageState extends State<LoginPage> {
             email: email,
             phone: phone,
             password: password,
+            isDarkMode: widget.isDarkMode,
+            onThemeChanged: widget.onThemeChanged,
           ),
         ),
       );

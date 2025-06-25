@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+  const WelcomeScreen({super.key, required this.isDarkMode, required this.onThemeChanged});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -27,7 +29,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => LoginPage(isDarkMode: widget.isDarkMode, onThemeChanged: widget.onThemeChanged)),
       );
     });
   }

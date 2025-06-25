@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
-import 'upi_payment_page.dart';
+import 'transport_fare_payment_page.dart';
 
 class FoodPage extends StatefulWidget {
-  const FoodPage({super.key});
+  final String username;
+  final String email;
+  final String phone;
+  final String password;
+  final String? upiPin;
+  final void Function(String)? onPinSet;
+
+  const FoodPage({
+    super.key,
+    required this.username,
+    required this.email,
+    required this.phone,
+    required this.password,
+    this.upiPin,
+    this.onPinSet,
+  });
 
   @override
   _FoodPageState createState() => _FoodPageState();
@@ -227,14 +242,17 @@ class _FoodPageState extends State<FoodPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => UPIPaymentPage(
+                        builder: (_) => TransportFarePaymentPage(
+                          amount: total,
                           cardId: 'FOODCART',
                           scannedData: selectedFood.map((f) => f.name).join(', '),
                           timestamp: DateTime.now().toString(),
-                          username: 'DemoUser', // Replace with real user info
-                          email: 'demo@example.com',
-                          phone: '1234567890',
-                          password: 'demo123',
+                          username: widget.username,
+                          email: widget.email,
+                          phone: widget.phone,
+                          password: widget.password,
+                          upiPin: widget.upiPin,
+                          onPinSet: widget.onPinSet,
                         ),
                       ),
                     );
@@ -363,14 +381,17 @@ class _FoodPageState extends State<FoodPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => UPIPaymentPage(
+                  builder: (_) => TransportFarePaymentPage(
+                    amount: total,
                     cardId: 'FOODCART',
                     scannedData: selectedFood.map((f) => f.name).join(', '),
                     timestamp: DateTime.now().toString(),
-                    username: 'DemoUser', // Replace with real user info
-                    email: 'demo@example.com',
-                    phone: '1234567890',
-                    password: 'demo123',
+                    username: widget.username,
+                    email: widget.email,
+                    phone: widget.phone,
+                    password: widget.password,
+                    upiPin: widget.upiPin,
+                    onPinSet: widget.onPinSet,
                   ),
                 ),
               );
@@ -415,6 +436,11 @@ class FoodItem {
 void main() {
   runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: FoodPage(),
+    home: FoodPage(
+      username: 'DemoUser',
+      email: 'demo@example.com',
+      phone: '1234567890',
+      password: 'demo123',
+    ),
   ));
 }

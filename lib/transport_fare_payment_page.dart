@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'payment_success_page.dart';
+import 'widgets/upi_pin_dialog.dart';
 
 class TransportFarePaymentPage extends StatefulWidget {
   final double amount;
@@ -12,6 +13,8 @@ class TransportFarePaymentPage extends StatefulWidget {
   final String email;
   final String phone;
   final String password;
+  final String? upiPin;
+  final void Function(String)? onPinSet;
 
   const TransportFarePaymentPage({
     Key? key,
@@ -23,6 +26,8 @@ class TransportFarePaymentPage extends StatefulWidget {
     required this.email,
     required this.phone,
     required this.password,
+    this.upiPin,
+    this.onPinSet,
   }) : super(key: key);
 
   @override
@@ -35,52 +40,66 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
 
   Future<void> submitPayment() async {
     if (isSubmitting) return;
-
-    setState(() {
-      isSubmitting = true;
-      errorMessage = '';
-    });
-
-    final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
-
-    try {
-      final balanceSnapshot = await userRef.child('balance').get();
-      final currentBalance = balanceSnapshot.exists
-          ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0
-          : 0.0;
-
-      if (currentBalance < widget.amount) {
-        setState(() {
-          errorMessage = 'Insufficient balance.';
-          isSubmitting = false;
-        });
-        return;
-      }
-
-      final updatedBalance = currentBalance - widget.amount;
-      await userRef.update({'balance': updatedBalance});
-      final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
-      final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
-      final newPoints = currentPoints + 1;
-      await userRef.update({'rewardPoints': newPoints});
-      await userRef.child('rewardHistory').push().set({
-        'points': 1,
-        'timestamp': widget.timestamp,
-        'description': 'Earned for Transport Payment',
-      });
-      await userRef.child('transactions').push().set({
-        'amount': widget.amount,
-        'timestamp': widget.timestamp,
-        'purpose': 'Transport Booking - ${widget.scannedData}',
-      });
-
-      if (!mounted) return;
-
+    final pinVerified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => UpiPinDialog(
+        currentPin: widget.upiPin,
+        onPinVerified: (_) async {
+          try {
+            setState(() {
+              isSubmitting = true;
+              errorMessage = '';
+            });
+            final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
+            final balanceSnapshot = await userRef.child('balance').get();
+            final currentBalance = balanceSnapshot.exists
+                ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0
+                : 0.0;
+            if (currentBalance < widget.amount) {
+              setState(() {
+                errorMessage = 'Insufficient balance.';
+                isSubmitting = false;
+              });
+              Navigator.of(dialogContext).pop(false);
+              return;
+            }
+            final updatedBalance = currentBalance - widget.amount;
+            await userRef.update({'balance': updatedBalance});
+            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+            final newPoints = currentPoints + 1;
+            await userRef.update({'rewardPoints': newPoints});
+            await userRef.child('rewardHistory').push().set({
+              'points': 1,
+              'timestamp': widget.timestamp,
+              'description': 'Earned for Transport Payment',
+            });
+            await userRef.child('transactions').push().set({
+              'amount': widget.amount,
+              'timestamp': widget.timestamp,
+              'purpose': 'Transport Booking - ${widget.scannedData}',
+            });
+            if (!mounted) return;
+            Navigator.of(dialogContext).pop(true);
+          } catch (e) {
+            setState(() {
+              errorMessage = 'Payment failed: $e';
+              isSubmitting = false;
+            });
+            Navigator.of(dialogContext).pop(false);
+          }
+        },
+        onPinSet: widget.onPinSet,
+      ),
+    );
+    if (pinVerified == true) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => PaymentSuccessPage(
             amount: widget.amount,
+            recipient: widget.scannedData,
             username: widget.username,
             email: widget.email,
             phone: widget.phone,
@@ -88,9 +107,9 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
           ),
         ),
       );
-    } catch (e) {
+    } else {
       setState(() {
-        errorMessage = 'Payment failed: $e';
+        errorMessage = errorMessage.isNotEmpty ? errorMessage : 'Payment failed. Please try again.';
         isSubmitting = false;
       });
     }
@@ -112,6 +131,10 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: isSubmitting ? null : submitPayment,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                textStyle: const TextStyle(fontSize: 18),
+              ),
               child: isSubmitting
                   ? const CircularProgressIndicator(color: Colors.white)
                   : const Text('Pay Now'),

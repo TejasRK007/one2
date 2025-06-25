@@ -1,1 +1,45 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"one-card-9ac2d","appId":"1:593061791548:android:2e11bd492ec4b055948039","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"one-card-9ac2d","configurations":{"android":"1:593061791548:android:2e11bd492ec4b055948039"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "one-card-9ac2d",
+          "appId": "1:593061791548:android:2e11bd492ec4b055948039",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "one-card-9ac2d",
+          "configurations": {
+            "android": "1:593061791548:android:2e11bd492ec4b055948039"
+          }
+        }
+      }
+    }
+  },
+  "database": {
+    "rules": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "users": {
+        "$uid": {
+          ".read": "$uid === auth.token.phone_number || auth.uid != null",
+          ".write": "$uid === auth.token.phone_number || auth.uid != null"
+        }
+      },
+      "cards": {
+        ".read": "auth.uid != null",
+        ".write": "auth.uid != null"
+      },
+      "pending_links": {
+        ".read": true,
+        ".write": true
+      },
+      "taps": {
+        ".read": "auth.uid != null",
+        ".write": true
+      }
+    }
+  }
+}

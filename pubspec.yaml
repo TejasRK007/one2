@@ -15,10 +15,12 @@ dependencies:
   permission_handler: ^11.3.0
   url_launcher: ^6.2.5
   animated_check: ^1.0.0
-  firebase_core: ^2.24.2
+  firebase_core: any
   firebase_auth: ^4.17.4
-  firebase_database: ^10.4.7
+  firebase_database: any
   intl: ^0.18.1
+  fl_chart: ^0.63.0
+  flutter_local_notifications: ^19.2.1
 
 
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'home_screen.dart'; // ✅ Ensure this path is correct based on your folder structure
 
-class PaymentSuccessPage extends StatelessWidget {
+class PaymentSuccessPage extends StatefulWidget {
   final double amount;
+  final String recipient;
   final String username;
   final String email;
   final String phone;
@@ -11,6 +13,7 @@ class PaymentSuccessPage extends StatelessWidget {
   const PaymentSuccessPage({
     Key? key,
     required this.amount,
+    required this.recipient,
     required this.username,
     required this.email,
     required this.phone,
@@ -18,47 +21,109 @@ class PaymentSuccessPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
+}
+
+class _PaymentSuccessPageState extends State<PaymentSuccessPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _scaleAnim = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment Successful')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 100),
-              const SizedBox(height: 20),
-              Text(
-                '₹${amount.toStringAsFixed(2)} Paid Successfully!',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.home),
-                label: const Text('Back to Home'),
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HomeScreen(
-                        username: username,
-                        email: email,
-                        phone: phone,
-                        password: password,
-                      ),
+      backgroundColor: Colors.green.shade50,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _scaleAnim,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.green,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 5,
                     ),
-                        (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 16),
+                  ],
                 ),
+                padding: const EdgeInsets.all(32),
+                child: const Icon(Icons.check, color: Colors.white, size: 80),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Transaction Successful!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '₹${widget.amount.toStringAsFixed(2)} paid to',
+              style: const TextStyle(fontSize: 20, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              widget.recipient,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.home),
+              label: const Text('Back to Home'),
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HomeScreen(
+                      username: widget.username,
+                      email: widget.email,
+                      phone: widget.phone,
+                      password: widget.password,
+                      isDarkMode: false,
+                      onThemeChanged: (v) {},
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                textStyle: const TextStyle(fontSize: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+              ),
+            ),
+          ],
         ),
       ),
     );
