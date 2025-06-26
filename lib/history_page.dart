@@ -75,37 +75,52 @@ class _HistoryPageState extends State<HistoryPage> {
               : transactions.isEmpty
                   ? const Center(child: Text("No transactions yet."))
                   : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       itemCount: transactions.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 18),
                       itemBuilder: (context, index) {
                         final tx = transactions[index];
                         final amount = tx['amount'] ?? 0;
                         final purpose = tx['purpose'] ?? '';
                         final timestamp = formatTimestamp(tx['timestamp']?.toString());
                         return Card(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.indigo.shade100,
-                              child: Icon(Icons.currency_rupee, color: Colors.indigo.shade700),
-                            ),
-                            title: Text(
-                              '₹${amount.toString()}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                            ),
-                            subtitle: Column(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          color: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(purpose, style: const TextStyle(fontSize: 15)),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(timestamp, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-                                  ],
+                                CircleAvatar(
+                                  backgroundColor: Colors.indigo.shade100,
+                                  radius: 28,
+                                  child: Icon(Icons.currency_rupee, color: Colors.indigo.shade700, size: 32),
+                                ),
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        purpose,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '₹${amount.toString()}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.indigo),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(timestamp, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

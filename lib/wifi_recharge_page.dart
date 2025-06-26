@@ -47,10 +47,27 @@ class _WifiRechargePageState extends State<WifiRechargePage> {
             }
             final updatedBalance = currentBalance - amount;
             await userRef.update({'balance': updatedBalance});
+            // Increment reward points and log history
+            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+            final newPoints = currentPoints + 1;
+            await userRef.update({'rewardPoints': newPoints});
+            await userRef.child('rewardHistory').push().set({
+              'points': 1,
+              'timestamp': DateTime.now().toString(),
+              'description': 'Earned for WiFi Recharge',
+            });
             await userRef.child('transactions').push().set({
               'amount': amount,
               'timestamp': DateTime.now().toString(),
               'purpose': 'WiFi Recharge - $_selectedProvider ($account)',
+            });
+            // Add notification
+            await userRef.child('notifications').push().set({
+              'title': 'WiFi Recharge Successful',
+              'body': 'You recharged WiFi ($account) with ₹${amount.toStringAsFixed(2)} ($_selectedProvider). 1 reward point awarded.',
+              'timestamp': DateTime.now().toString(),
+              'read': false,
             });
             if (!mounted) return;
             Navigator.of(dialogContext).pop(true);

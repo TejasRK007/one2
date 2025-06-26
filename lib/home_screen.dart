@@ -251,281 +251,370 @@ class HomePageContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.all(20),
-          child: ListView(
-            children: [
-              Text(
-                'Welcome $username 👋',
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Explore your digital services',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 25),
-              const Text(
-                'Your Services',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 170,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+          children: [
+            Text(
+              'Welcome $username 👋',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Explore your digital services',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 25),
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FeatureCard(
-                      title: 'Identity',
-                      icon: Icons.perm_identity,
-                      onTap: () {
-                        navigateTo(
-                          context,
-                          ProfilePage(
-                            username: username,
-                            password: password,
-                            email: email,
-                            phone: phone,
-                          ),
-                        );
-                      },
+                    const Text(
+                      'Your Services',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
-                    FeatureCard(
-                      title: 'Banking',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        navigateTo(context, const BankingPage());
-                      },
-                    ),
-                    FeatureCard(
-                      title: 'Transport',
-                      icon: Icons.directions_bus,
-                      onTap: () {
-                        navigateTo(
-                          context,
-                          TransportPage(
-                            username: username,
-                            email: email,
-                            phone: phone,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        );
-                      },
-                    ),
-                    FeatureCard(
-                      title: 'Food',
-                      icon: Icons.restaurant,
-                      onTap: () {
-                        navigateTo(
-                            context,
-                            FoodPage(
-                              username: username,
-                              email: email,
-                              phone: phone,
-                              password: password,
-                              upiPin: upiPin,
-                              onPinSet: onPinSet,
-                            ));
-                      },
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 18,
+                      runSpacing: 18,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _HomeSectionButton(
+                          icon: Icons.perm_identity,
+                          label: 'Identity',
+                          onTap: () {
+                            navigateTo(
+                              context,
+                              ProfilePage(
+                                username: username,
+                                password: password,
+                                email: email,
+                                phone: phone,
+                              ),
+                            );
+                          },
+                        ),
+                        _HomeSectionButton(
+                          icon: Icons.account_balance,
+                          label: 'Banking',
+                          onTap: () {
+                            navigateTo(
+                              context,
+                              BankingPage(
+                                phone: phone,
+                                username: username,
+                                email: email,
+                                password: password,
+                                upiPin: upiPin,
+                                onPinSet: onPinSet,
+                              ),
+                            );
+                          },
+                        ),
+                        _HomeSectionButton(
+                          icon: Icons.directions_bus,
+                          label: 'Transport',
+                          onTap: () {
+                            navigateTo(
+                              context,
+                              TransportPage(
+                                username: username,
+                                email: email,
+                                phone: phone,
+                                password: password,
+                                upiPin: upiPin,
+                                onPinSet: onPinSet,
+                              ),
+                            );
+                          },
+                        ),
+                        _HomeSectionButton(
+                          icon: Icons.restaurant,
+                          label: 'Food',
+                          onTap: () {
+                            navigateTo(
+                              context,
+                              FoodPage(
+                                username: username,
+                                email: email,
+                                phone: phone,
+                                password: password,
+                                upiPin: upiPin,
+                                onPinSet: onPinSet,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 25),
-              Text(
-                'Wallet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BalancePage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Check Balance'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RechargePage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Recharge'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MobileRechargePage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Mobile Recharge'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => WifiRechargePage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('WiFi Recharge'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DthRechargePage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('DTH Recharge'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ElectricityBillPage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Electricity Bill'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 25),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.tap_and_play),
-                label: const Text('Tap to Pay'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TapPaymentPage(
-                        upiPin: upiPin,
-                        username: username,
-                        email: email,
-                        phone: phone,
-                        password: password,
-                        onPinSet: onPinSet,
+            ),
+            const SizedBox(height: 25),
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Wallet',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final buttonWidth = (constraints.maxWidth - 3 * 12) / 2; // 2 per row, 12px spacing
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 18,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: buttonWidth < 120 ? 120 : buttonWidth,
+                                child: _HomeSectionButton(
+                                  icon: Icons.account_balance_wallet,
+                                  label: 'Check Balance',
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BalancePage(
+                                          phone: phone,
+                                          username: username,
+                                          email: email,
+                                          password: password,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: buttonWidth < 120 ? 120 : buttonWidth,
+                                child: _HomeSectionButton(
+                                  icon: Icons.add_circle_outline,
+                                  label: 'Recharge',
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => RechargePage(
+                                          phone: phone,
+                                          username: username,
+                                          email: email,
+                                          password: password,
+                                          upiPin: upiPin,
+                                          onPinSet: onPinSet,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: buttonWidth < 120 ? 120 : buttonWidth,
+                                child: _HomeSectionButton(
+                                  icon: Icons.phone_android,
+                                  label: 'Mobile Recharge',
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => MobileRechargePage(
+                                          phone: phone,
+                                          username: username,
+                                          email: email,
+                                          password: password,
+                                          upiPin: upiPin,
+                                          onPinSet: onPinSet,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: buttonWidth < 120 ? 120 : buttonWidth,
+                                child: _HomeSectionButton(
+                                  icon: Icons.wifi,
+                                  label: 'WiFi Recharge',
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => WifiRechargePage(
+                                          phone: phone,
+                                          username: username,
+                                          email: email,
+                                          password: password,
+                                          upiPin: upiPin,
+                                          onPinSet: onPinSet,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18),
+                  ],
                 ),
               ),
-              const SizedBox(height: 25),
-              // TODO: Insert Recent Activity Widget here
-              // TODO: Insert Analytics Chart here
-              const Text(
-                'Explore More',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ExploreIcon(icon: Icons.qr_code, label: 'Scan'),
-                  ExploreIcon(icon: Icons.redeem, label: 'Rewards'),
-                  ExploreIcon(icon: Icons.history, label: 'History'),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SettingsPage(
-                            phone: phone,
-                            username: username,
-                            email: email,
-                            password: password,
-                            isDarkMode: isDarkMode,
-                            onThemeChanged: onThemeChanged,
-                            upiPin: upiPin,
-                            onPinSet: onPinSet,
-                            cardUID: cardUID,
-                            onCardLinked: onCardLinked,
-                          ),
+            ),
+            const SizedBox(height: 25),
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 18,
+                      runSpacing: 18,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _HomeSectionButton(
+                          icon: Icons.qr_code_scanner,
+                          label: 'Scan & Pay',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QRScanPage(
+                                  username: username,
+                                  email: email,
+                                  phone: phone,
+                                  password: password,
+                                  upiPin: upiPin,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                    child: ExploreIcon(icon: Icons.settings, label: 'Settings'),
-                  ),
-                ],
+                        _HomeSectionButton(
+                          icon: Icons.redeem,
+                          label: 'Rewards',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RewardsPage(
+                                  phone: phone,
+                                  username: username,
+                                  email: email,
+                                  password: password,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _HomeSectionButton(
+                          icon: Icons.history,
+                          label: 'History',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => HistoryPage(
+                                  phone: phone,
+                                  username: username,
+                                  email: email,
+                                  password: password,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _HomeSectionButton(
+                          icon: Icons.settings,
+                          label: 'Settings',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SettingsPage(
+                                  phone: phone,
+                                  username: username,
+                                  email: email,
+                                  password: password,
+                                  isDarkMode: isDarkMode,
+                                  onThemeChanged: onThemeChanged,
+                                  upiPin: upiPin,
+                                  onPinSet: onPinSet,
+                                  cardUID: cardUID,
+                                  onCardLinked: onCardLinked,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeSectionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _HomeSectionButton({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 70,
+        height: 70,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.indigo.shade50,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: Colors.indigo),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.indigo),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

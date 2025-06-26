@@ -153,40 +153,47 @@ class _TransportPageState extends State<TransportPage> {
   Widget _buildTransportSection(String type, List<TransportInfo> options) {
     final icon = _typeIcon(type);
     final color = _typeColor(type);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 8),
-            Text(
-              type,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 170,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: options.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final option = options[index];
-              return _buildTransportCard(option, color);
-            },
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                type,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 24),
-      ],
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: options.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                final option = options[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: _buildTransportCard(option, color),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
   Widget _buildTransportCard(TransportInfo option, Color color) {
     return Container(
       width: 240,
+      constraints: const BoxConstraints(maxHeight: 180),
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -221,6 +228,8 @@ class _TransportPageState extends State<TransportPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: color,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 16),
                     ),
                     onPressed: () {
                       final fareAmount = double.tryParse(option.fare.replaceAll('₹', '').trim());

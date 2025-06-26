@@ -97,6 +97,13 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
               'timestamp': widget.timestamp,
               'purpose': 'QR Payment - ${widget.scannedData}',
             });
+            // Add notification
+            await userRef.child('notifications').push().set({
+              'title': 'Payment Successful',
+              'body': 'You paid ₹${enteredAmount.toStringAsFixed(2)} to ${widget.scannedData}. 1 reward point awarded.',
+              'timestamp': widget.timestamp,
+              'read': false,
+            });
             if (!mounted) return;
             Navigator.of(dialogContext).pop(true);
           } catch (e) {

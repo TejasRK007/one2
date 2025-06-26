@@ -80,6 +80,12 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
               'timestamp': widget.timestamp,
               'purpose': 'Transport Booking - ${widget.scannedData}',
             });
+            await userRef.child('notifications').push().set({
+              'title': 'Transport Fare Paid',
+              'body': 'You paid ₹${widget.amount.toStringAsFixed(2)} for ${widget.scannedData}. 1 reward point awarded.',
+              'timestamp': widget.timestamp,
+              'read': false,
+            });
             if (!mounted) return;
             Navigator.of(dialogContext).pop(true);
           } catch (e) {

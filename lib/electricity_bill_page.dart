@@ -47,10 +47,27 @@ class _ElectricityBillPageState extends State<ElectricityBillPage> {
             }
             final updatedBalance = currentBalance - amount;
             await userRef.update({'balance': updatedBalance});
+            // Increment reward points and log history
+            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+            final newPoints = currentPoints + 1;
+            await userRef.update({'rewardPoints': newPoints});
+            await userRef.child('rewardHistory').push().set({
+              'points': 1,
+              'timestamp': DateTime.now().toString(),
+              'description': 'Earned for Electricity Bill Payment',
+            });
             await userRef.child('transactions').push().set({
               'amount': amount,
               'timestamp': DateTime.now().toString(),
               'purpose': 'Electricity Bill - $_selectedBoard ($consumerNumber)',
+            });
+            // Add notification
+            await userRef.child('notifications').push().set({
+              'title': 'Electricity Bill Paid',
+              'body': 'You paid ₹${amount.toStringAsFixed(2)} for $_selectedBoard ($consumerNumber). 1 reward point awarded.',
+              'timestamp': DateTime.now().toString(),
+              'read': false,
             });
             if (!mounted) return;
             Navigator.of(dialogContext).pop(true);

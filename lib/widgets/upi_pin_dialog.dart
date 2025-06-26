@@ -41,11 +41,11 @@ class _UpiPinDialogState extends State<UpiPinDialog> {
         return;
       }
       widget.onPinSet?.call(pin);
-      Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop(true);
     } else {
       if (pin == widget.currentPin) {
         widget.onPinVerified(pin);
-        Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop(true);
       } else {
         setState(() => _errorText = 'Incorrect PIN');
       }
@@ -85,7 +85,7 @@ class _UpiPinDialogState extends State<UpiPinDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () { if (mounted) Navigator.of(context).pop(false); },
           child: const Text('Cancel'),
         ),
         ElevatedButton(

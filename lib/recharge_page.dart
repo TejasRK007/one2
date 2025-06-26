@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'widgets/upi_pin_dialog.dart';
+import 'payment_success_page.dart';
 
 class RechargePage extends StatefulWidget {
   final String phone, username, email, password;
@@ -38,11 +39,34 @@ class _RechargePageState extends State<RechargePage> {
         currentPin: widget.upiPin,
         onPinVerified: (_) async {
           try {
-            final ref = FirebaseDatabase.instance.ref().child('users/${widget.phone}/balance');
-            final snapshot = await ref.get();
+            final ref = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
+            final balanceRef = ref.child('balance');
+            final snapshot = await balanceRef.get();
             double current = snapshot.exists ? double.tryParse(snapshot.value.toString()) ?? 0.0 : 0.0;
             final updated = current + enteredAmount;
-            await ref.set(updated);
+            await balanceRef.set(updated);
+            // Increment reward points and log history
+            final rewardPointsSnapshot = await ref.child('rewardPoints').get();
+            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+            final newPoints = currentPoints + 1;
+            await ref.update({'rewardPoints': newPoints});
+            await ref.child('rewardHistory').push().set({
+              'points': 1,
+              'timestamp': DateTime.now().toString(),
+              'description': 'Earned for Wallet Recharge',
+            });
+            await ref.child('transactions').push().set({
+              'amount': enteredAmount,
+              'timestamp': DateTime.now().toString(),
+              'purpose': 'Wallet Recharge',
+            });
+            // Add notification
+            await ref.child('notifications').push().set({
+              'title': 'Wallet Recharged',
+              'body': 'You recharged your wallet with ₹${enteredAmount.toStringAsFixed(2)}. 1 reward point awarded.',
+              'timestamp': DateTime.now().toString(),
+              'read': false,
+            });
             Navigator.of(dialogContext).pop(true);
           } catch (e) {
             setState(() => message = 'Recharge failed: $e');
@@ -53,7 +77,19 @@ class _RechargePageState extends State<RechargePage> {
       ),
     );
     if (pinVerified == true) {
-      setState(() => message = 'Recharged successfully! New Balance: ₹${(double.tryParse(_controller.text.trim()) ?? 0.0).toStringAsFixed(2)}');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentSuccessPage(
+            amount: enteredAmount,
+            recipient: 'Wallet Recharge',
+            username: widget.username,
+            email: widget.email,
+            phone: widget.phone,
+            password: widget.password,
+          ),
+        ),
+      );
     } else {
       setState(() => message = message.isNotEmpty ? message : 'Recharge failed. Please try again.');
     }

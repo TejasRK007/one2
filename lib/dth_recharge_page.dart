@@ -47,10 +47,27 @@ class _DthRechargePageState extends State<DthRechargePage> {
             }
             final updatedBalance = currentBalance - amount;
             await userRef.update({'balance': updatedBalance});
+            // Increment reward points and log history
+            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+            final newPoints = currentPoints + 1;
+            await userRef.update({'rewardPoints': newPoints});
+            await userRef.child('rewardHistory').push().set({
+              'points': 1,
+              'timestamp': DateTime.now().toString(),
+              'description': 'Earned for DTH Recharge',
+            });
             await userRef.child('transactions').push().set({
               'amount': amount,
               'timestamp': DateTime.now().toString(),
               'purpose': 'DTH Recharge - $_selectedOperator ($customerId)',
+            });
+            // Add notification
+            await userRef.child('notifications').push().set({
+              'title': 'DTH Recharge Successful',
+              'body': 'You recharged DTH ($customerId) with ₹${amount.toStringAsFixed(2)} ($_selectedOperator). 1 reward point awarded.',
+              'timestamp': DateTime.now().toString(),
+              'read': false,
             });
             if (!mounted) return;
             Navigator.of(dialogContext).pop(true);
