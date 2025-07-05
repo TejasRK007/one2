@@ -24,28 +24,37 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
 
-    if (username.isNotEmpty &&
-        password.isNotEmpty &&
-        email.isNotEmpty &&
-        phone.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(
-            username: username,
-            email: email,
-            phone: phone,
-            password: password,
-            isDarkMode: widget.isDarkMode,
-            onThemeChanged: widget.onThemeChanged,
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields")),
-      );
+    String? error;
+    if (username.isEmpty || password.isEmpty || email.isEmpty || phone.isEmpty) {
+      error = "Please fill in all fields";
+    } else if (!email.contains('@')) {
+      error = "Please enter a valid email address (must contain '@')";
+    } else if (phone.length != 10 || int.tryParse(phone) == null) {
+      error = "Phone number must be exactly 10 digits";
+    } else if (password.length < 8) {
+      error = "Password must be at least 8 characters";
     }
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(
+          username: username,
+          email: email,
+          phone: phone,
+          password: password,
+          isDarkMode: widget.isDarkMode,
+          onThemeChanged: widget.onThemeChanged,
+        ),
+      ),
+    );
   }
 
   @override

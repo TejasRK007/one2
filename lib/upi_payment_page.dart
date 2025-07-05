@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'payment_success_page.dart';
 import 'widgets/upi_pin_dialog.dart';
+import 'widgets/rfid_tap_dialog.dart';
 
 class UPIPaymentPage extends StatefulWidget {
   final String cardId;
@@ -56,68 +57,71 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
       });
       return;
     }
-    final pinVerified = await showDialog<bool>(
+    setState(() { isSubmitting = true; errorMessage = ''; });
+    // 1. Get user's linked card UID from Firebase
+    final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
+    final cardUidSnapshot = await userRef.child('cardUID').get();
+    final cardUid = cardUidSnapshot.exists ? cardUidSnapshot.value.toString() : null;
+    if (cardUid == null) {
+      setState(() {
+        errorMessage = 'No card linked to this account.';
+        isSubmitting = false;
+      });
+      return;
+    }
+    // 2. Show RFID tap dialog
+    final tappedUid = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => UpiPinDialog(
-        currentPin: widget.upiPin,
-        onPinVerified: (_) async {
-          try {
-            setState(() {
-              isSubmitting = true;
-              errorMessage = '';
-            });
-            final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
-            final balanceSnapshot = await userRef.child('balance').get();
-            final currentBalance = balanceSnapshot.exists
-                ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0
-                : 0.0;
-            if (currentBalance < enteredAmount) {
-              setState(() {
-                errorMessage = 'Insufficient balance.';
-                isSubmitting = false;
-              });
-              Navigator.of(dialogContext).pop(false);
-              return;
-            }
-            final updatedBalance = currentBalance - enteredAmount;
-            await userRef.update({'balance': updatedBalance});
-            // Increment reward points and log history
-            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
-            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
-            final newPoints = currentPoints + 1;
-            await userRef.update({'rewardPoints': newPoints});
-            await userRef.child('rewardHistory').push().set({
-              'points': 1,
-              'timestamp': widget.timestamp,
-              'description': 'Earned for QR Payment',
-            });
-            await userRef.child('transactions').push().set({
-              'amount': enteredAmount,
-              'timestamp': widget.timestamp,
-              'purpose': 'QR Payment - ${widget.scannedData}',
-            });
-            // Add notification
-            await userRef.child('notifications').push().set({
-              'title': 'Payment Successful',
-              'body': 'You paid ₹${enteredAmount.toStringAsFixed(2)} to ${widget.scannedData}. 1 reward point awarded.',
-              'timestamp': widget.timestamp,
-              'read': false,
-            });
-            if (!mounted) return;
-            Navigator.of(dialogContext).pop(true);
-          } catch (e) {
-            setState(() {
-              errorMessage = 'Failed to update balance: $e';
-              isSubmitting = false;
-            });
-            Navigator.of(dialogContext).pop(false);
-          }
-        },
-        onPinSet: widget.onPinSet,
+      builder: (dialogContext) => RfidTapDialog(
+        phone: widget.phone,
+        expectedUid: cardUid,
+        amount: enteredAmount,
       ),
     );
-    if (pinVerified == true) {
+    if (tappedUid == null) {
+      setState(() {
+        errorMessage = 'RFID card tap failed or cancelled.';
+        isSubmitting = false;
+      });
+      return;
+    }
+    // 3. Deduct from card balance already done in dialog, now update user balance and log transaction
+    try {
+      final balanceSnapshot = await userRef.child('balance').get();
+      final currentBalance = balanceSnapshot.exists ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0 : 0.0;
+      if (currentBalance < enteredAmount) {
+        setState(() {
+          errorMessage = 'Insufficient app balance.';
+          isSubmitting = false;
+        });
+        return;
+      }
+      final updatedBalance = currentBalance - enteredAmount;
+      await userRef.update({'balance': updatedBalance});
+      // Increment reward points and log history
+      final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+      final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+      final newPoints = currentPoints + 1;
+      await userRef.update({'rewardPoints': newPoints});
+      await userRef.child('rewardHistory').push().set({
+        'points': 1,
+        'timestamp': widget.timestamp,
+        'description': 'Earned for QR Payment',
+      });
+      await userRef.child('transactions').push().set({
+        'amount': enteredAmount,
+        'timestamp': widget.timestamp,
+        'purpose': 'QR Payment - ${widget.scannedData}',
+      });
+      // Add notification
+      await userRef.child('notifications').push().set({
+        'title': 'Payment Successful',
+        'body': 'You paid ₹${enteredAmount.toStringAsFixed(2)} to ${widget.scannedData}. 1 reward point awarded.',
+        'timestamp': widget.timestamp,
+        'read': false,
+      });
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -131,9 +135,9 @@ class _UPIPaymentPageState extends State<UPIPaymentPage> {
           ),
         ),
       );
-    } else {
+    } catch (e) {
       setState(() {
-        errorMessage = errorMessage.isNotEmpty ? errorMessage : 'Payment failed. Please try again.';
+        errorMessage = 'Failed to update balance: $e';
         isSubmitting = false;
       });
     }

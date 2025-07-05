@@ -81,8 +81,26 @@ class _HistoryPageState extends State<HistoryPage> {
                       itemBuilder: (context, index) {
                         final tx = transactions[index];
                         final amount = tx['amount'] ?? 0;
-                        final purpose = tx['purpose'] ?? '';
+                        final purpose = (tx['purpose'] ?? '').toString();
                         final timestamp = formatTimestamp(tx['timestamp']?.toString());
+                        final isRecharge = purpose.toLowerCase().contains('recharge');
+                        final isPayment = purpose.toLowerCase().contains('payment') || purpose.toLowerCase().contains('paid');
+                        final isBill = purpose.toLowerCase().contains('bill');
+                        IconData icon;
+                        Color color;
+                        if (isRecharge) {
+                          icon = Icons.add_card;
+                          color = Colors.green;
+                        } else if (isPayment) {
+                          icon = Icons.payment;
+                          color = Colors.indigo;
+                        } else if (isBill) {
+                          icon = Icons.receipt_long;
+                          color = Colors.orange;
+                        } else {
+                          icon = Icons.history;
+                          color = Colors.grey;
+                        }
                         return Card(
                           elevation: 4,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -93,9 +111,9 @@ class _HistoryPageState extends State<HistoryPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: Colors.indigo.shade100,
+                                  backgroundColor: color.withOpacity(0.15),
                                   radius: 28,
-                                  child: Icon(Icons.currency_rupee, color: Colors.indigo.shade700, size: 32),
+                                  child: Icon(icon, color: color, size: 32),
                                 ),
                                 const SizedBox(width: 18),
                                 Expanded(
@@ -104,11 +122,11 @@ class _HistoryPageState extends State<HistoryPage> {
                                     children: [
                                       Text(
                                         purpose,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: color),
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        '₹${amount.toString()}',
+                                        '\u20b9${amount.toString()}',
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.indigo),
                                       ),
                                       const SizedBox(height: 6),

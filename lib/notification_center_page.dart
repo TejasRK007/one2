@@ -51,13 +51,34 @@ class _NotificationCenterPageState extends State<NotificationCenterPage> {
                   itemCount: notifications.length,
                   itemBuilder: (context, index) {
                     final notif = notifications[index];
+                    final title = notif['title'] ?? 'Notification';
+                    final body = notif['body'] ?? '';
+                    final isRecharge = title.toLowerCase().contains('recharge');
+                    final isPayment = title.toLowerCase().contains('payment') || title.toLowerCase().contains('paid');
+                    final isReward = title.toLowerCase().contains('reward');
+                    IconData icon;
+                    Color color;
+                    if (isRecharge) {
+                      icon = Icons.add_card;
+                      color = Colors.green;
+                    } else if (isPayment) {
+                      icon = Icons.payment;
+                      color = Colors.indigo;
+                    } else if (isReward) {
+                      icon = Icons.emoji_events;
+                      color = Colors.orange;
+                    } else {
+                      icon = Icons.notifications;
+                      color = Colors.grey;
+                    }
                     return ListTile(
                       leading: Icon(
-                        notif['read'] == true ? Icons.notifications_none : Icons.notifications,
-                        color: notif['read'] == true ? Colors.grey : Colors.indigo,
+                        icon,
+                        color: color,
+                        size: 32,
                       ),
-                      title: Text(notif['title'] ?? 'Notification'),
-                      subtitle: Text(notif['body'] ?? ''),
+                      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+                      subtitle: Text(body),
                       trailing: Text(
                         notif['timestamp'] != null ? notif['timestamp'].toString().substring(0, 16) : '',
                         style: const TextStyle(fontSize: 12, color: Colors.grey),

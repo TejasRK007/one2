@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'payment_success_page.dart';
 import 'widgets/upi_pin_dialog.dart';
+import 'widgets/rfid_tap_dialog.dart';
 
 class DthRechargePage extends StatefulWidget {
   final String phone, username, email, password;
@@ -29,57 +30,59 @@ class _DthRechargePageState extends State<DthRechargePage> {
       setState(() => message = 'Please fill all fields correctly.');
       return;
     }
-    final pinVerified = await showDialog<bool>(
+    setState(() { message = ''; });
+    final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
+    final cardUidSnapshot = await userRef.child('cardUID').get();
+    final cardUid = cardUidSnapshot.exists ? cardUidSnapshot.value.toString() : null;
+    if (cardUid == null) {
+      setState(() => message = 'No card linked to this account.');
+      return;
+    }
+    final tappedUid = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => UpiPinDialog(
-        currentPin: widget.upiPin,
-        onPinVerified: (_) async {
-          try {
-            setState(() { isSubmitting = true; message = ''; });
-            final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
-            final balanceSnapshot = await userRef.child('balance').get();
-            final currentBalance = balanceSnapshot.exists ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0 : 0.0;
-            if (currentBalance < amount) {
-              setState(() { message = 'Insufficient balance.'; isSubmitting = false; });
-              Navigator.of(dialogContext).pop(false);
-              return;
-            }
-            final updatedBalance = currentBalance - amount;
-            await userRef.update({'balance': updatedBalance});
-            // Increment reward points and log history
-            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
-            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
-            final newPoints = currentPoints + 1;
-            await userRef.update({'rewardPoints': newPoints});
-            await userRef.child('rewardHistory').push().set({
-              'points': 1,
-              'timestamp': DateTime.now().toString(),
-              'description': 'Earned for DTH Recharge',
-            });
-            await userRef.child('transactions').push().set({
-              'amount': amount,
-              'timestamp': DateTime.now().toString(),
-              'purpose': 'DTH Recharge - $_selectedOperator ($customerId)',
-            });
-            // Add notification
-            await userRef.child('notifications').push().set({
-              'title': 'DTH Recharge Successful',
-              'body': 'You recharged DTH ($customerId) with ₹${amount.toStringAsFixed(2)} ($_selectedOperator). 1 reward point awarded.',
-              'timestamp': DateTime.now().toString(),
-              'read': false,
-            });
-            if (!mounted) return;
-            Navigator.of(dialogContext).pop(true);
-          } catch (e) {
-            setState(() { message = 'Payment failed: $e'; isSubmitting = false; });
-            Navigator.of(dialogContext).pop(false);
-          }
-        },
-        onPinSet: widget.onPinSet,
+      builder: (dialogContext) => RfidTapDialog(
+        phone: widget.phone,
+        expectedUid: cardUid,
+        amount: amount,
       ),
     );
-    if (pinVerified == true) {
+    if (tappedUid == null) {
+      setState(() => message = 'RFID card tap failed or cancelled.');
+      return;
+    }
+    try {
+      setState(() { isSubmitting = true; message = ''; });
+      final balanceSnapshot = await userRef.child('balance').get();
+      final currentBalance = balanceSnapshot.exists ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0 : 0.0;
+      if (currentBalance < amount) {
+        setState(() { message = 'Insufficient balance.'; isSubmitting = false; });
+        return;
+      }
+      final updatedBalance = currentBalance - amount;
+      await userRef.update({'balance': updatedBalance});
+      // Increment reward points and log history
+      final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+      final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+      final newPoints = currentPoints + 1;
+      await userRef.update({'rewardPoints': newPoints});
+      await userRef.child('rewardHistory').push().set({
+        'points': 1,
+        'timestamp': DateTime.now().toString(),
+        'description': 'Earned for DTH Recharge',
+      });
+      await userRef.child('transactions').push().set({
+        'amount': amount,
+        'timestamp': DateTime.now().toString(),
+        'purpose': 'DTH Recharge - $_selectedOperator ($customerId)',
+      });
+      // Add notification
+      await userRef.child('notifications').push().set({
+        'title': 'DTH Recharge Successful',
+        'body': 'You recharged DTH ($customerId) with ₹${amount.toStringAsFixed(2)} ($_selectedOperator). 1 reward point awarded.',
+        'timestamp': DateTime.now().toString(),
+        'read': false,
+      });
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -93,11 +96,8 @@ class _DthRechargePageState extends State<DthRechargePage> {
           ),
         ),
       );
-    } else {
-      setState(() {
-        message = message.isNotEmpty ? message : 'Payment failed. Please try again.';
-        isSubmitting = false;
-      });
+    } catch (e) {
+      setState(() { message = 'Payment failed: $e'; isSubmitting = false; });
     }
   }
 

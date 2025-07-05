@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'payment_success_page.dart';
-import 'widgets/upi_pin_dialog.dart';
+import 'widgets/rfid_tap_dialog.dart';
 
 class TransportFarePaymentPage extends StatefulWidget {
   final double amount;
@@ -40,66 +40,65 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
 
   Future<void> submitPayment() async {
     if (isSubmitting) return;
-    final pinVerified = await showDialog<bool>(
+    setState(() { isSubmitting = true; errorMessage = ''; });
+    final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
+    final cardUidSnapshot = await userRef.child('cardUID').get();
+    final cardUid = cardUidSnapshot.exists ? cardUidSnapshot.value.toString() : null;
+    if (cardUid == null) {
+      setState(() {
+        errorMessage = 'No card linked to this account.';
+        isSubmitting = false;
+      });
+      return;
+    }
+    final tappedUid = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => UpiPinDialog(
-        currentPin: widget.upiPin,
-        onPinVerified: (_) async {
-          try {
-            setState(() {
-              isSubmitting = true;
-              errorMessage = '';
-            });
-            final userRef = FirebaseDatabase.instance.ref().child('users/${widget.phone}');
-            final balanceSnapshot = await userRef.child('balance').get();
-            final currentBalance = balanceSnapshot.exists
-                ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0
-                : 0.0;
-            if (currentBalance < widget.amount) {
-              setState(() {
-                errorMessage = 'Insufficient balance.';
-                isSubmitting = false;
-              });
-              Navigator.of(dialogContext).pop(false);
-              return;
-            }
-            final updatedBalance = currentBalance - widget.amount;
-            await userRef.update({'balance': updatedBalance});
-            final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
-            final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
-            final newPoints = currentPoints + 1;
-            await userRef.update({'rewardPoints': newPoints});
-            await userRef.child('rewardHistory').push().set({
-              'points': 1,
-              'timestamp': widget.timestamp,
-              'description': 'Earned for Transport Payment',
-            });
-            await userRef.child('transactions').push().set({
-              'amount': widget.amount,
-              'timestamp': widget.timestamp,
-              'purpose': 'Transport Booking - ${widget.scannedData}',
-            });
-            await userRef.child('notifications').push().set({
-              'title': 'Transport Fare Paid',
-              'body': 'You paid ₹${widget.amount.toStringAsFixed(2)} for ${widget.scannedData}. 1 reward point awarded.',
-              'timestamp': widget.timestamp,
-              'read': false,
-            });
-            if (!mounted) return;
-            Navigator.of(dialogContext).pop(true);
-          } catch (e) {
-            setState(() {
-              errorMessage = 'Payment failed: $e';
-              isSubmitting = false;
-            });
-            Navigator.of(dialogContext).pop(false);
-          }
-        },
-        onPinSet: widget.onPinSet,
+      builder: (dialogContext) => RfidTapDialog(
+        phone: widget.phone,
+        expectedUid: cardUid,
+        amount: widget.amount,
       ),
     );
-    if (pinVerified == true) {
+    if (tappedUid == null) {
+      setState(() {
+        errorMessage = 'RFID card tap failed or cancelled.';
+        isSubmitting = false;
+      });
+      return;
+    }
+    try {
+      final balanceSnapshot = await userRef.child('balance').get();
+      final currentBalance = balanceSnapshot.exists ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0 : 0.0;
+      if (currentBalance < widget.amount) {
+        setState(() {
+          errorMessage = 'Insufficient app balance.';
+          isSubmitting = false;
+        });
+        return;
+      }
+      final updatedBalance = currentBalance - widget.amount;
+      await userRef.update({'balance': updatedBalance});
+      final rewardPointsSnapshot = await userRef.child('rewardPoints').get();
+      final currentPoints = rewardPointsSnapshot.exists ? int.tryParse(rewardPointsSnapshot.value.toString()) ?? 0 : 0;
+      final newPoints = currentPoints + 1;
+      await userRef.update({'rewardPoints': newPoints});
+      await userRef.child('rewardHistory').push().set({
+        'points': 1,
+        'timestamp': widget.timestamp,
+        'description': 'Earned for Transport Payment',
+      });
+      await userRef.child('transactions').push().set({
+        'amount': widget.amount,
+        'timestamp': widget.timestamp,
+        'purpose': 'Transport Booking - ${widget.scannedData}',
+      });
+      await userRef.child('notifications').push().set({
+        'title': 'Transport Fare Paid',
+        'body': 'You paid ₹${widget.amount.toStringAsFixed(2)} for ${widget.scannedData}. 1 reward point awarded.',
+        'timestamp': widget.timestamp,
+        'read': false,
+      });
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -113,9 +112,9 @@ class _TransportFarePaymentPageState extends State<TransportFarePaymentPage> {
           ),
         ),
       );
-    } else {
+    } catch (e) {
       setState(() {
-        errorMessage = errorMessage.isNotEmpty ? errorMessage : 'Payment failed. Please try again.';
+        errorMessage = 'Payment failed: $e';
         isSubmitting = false;
       });
     }

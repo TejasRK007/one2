@@ -39,17 +39,39 @@ class _TransportPageState extends State<TransportPage> {
     'Guwahati', 'Surat', 'Kanpur', 'Varanasi', 'Agra', 'Ludhiana', 'Nashik',
   ];
 
+  final List<String> metroBusCities = [
+    'Bengaluru', 'Chennai', 'Mumbai', 'Kolkata', 'Kochi'
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // Group transport options by type, filtered by search
-    final Map<String, List<TransportInfo>> grouped = {};
+    // Filter logic: always show Train and Flight, add Metro and Bus if either city is in metroBusCities
+    final fromSpecial = metroBusCities.contains(selectedFrom);
+    final toSpecial = metroBusCities.contains(selectedTo);
+    final showMetroBus = fromSpecial || toSpecial;
+
+    // Filtered options
     final filteredOptions = allTransportOptions.where((t) {
-      final matchesRoute = t.from == selectedFrom && t.to == selectedTo;
+      final matchesRoute = (t.from == selectedFrom && t.to == selectedTo);
+      final isTrainOrFlight = t.type == 'Train' || t.type == 'Flight';
+      final isMetroOrBus = t.type == 'Metro' || t.type == 'Bus';
       final matchesSearch = searchQuery.isEmpty ||
         t.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
         t.type.toLowerCase().contains(searchQuery.toLowerCase());
+      if (isTrainOrFlight && matchesSearch) {
+        // Always show train/flight for any route
+        return (t.from == selectedFrom && t.to == selectedTo) || (t.type == 'Train' || t.type == 'Flight');
+      }
+      if (isMetroOrBus && showMetroBus && matchesSearch) {
+        // Show metro/bus if either city is special
+        return (t.from == selectedFrom || t.to == selectedTo) && (t.type == 'Metro' || t.type == 'Bus');
+      }
+      // Other types (Cab, Auto) only if route matches
       return matchesRoute && matchesSearch;
-    });
+    }).toList();
+
+    // Group by type
+    final Map<String, List<TransportInfo>> grouped = {};
     for (final t in filteredOptions) {
       grouped.putIfAbsent(t.type, () => []).add(t);
     }
@@ -66,66 +88,41 @@ class _TransportPageState extends State<TransportPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.tram),
-              label: const Text('Book Metro Ticket'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MetroPage(
-                      username: widget.username,
-                      email: widget.email,
-                      phone: widget.phone,
-                      password: widget.password,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontSize: 18),
+            // 1. Search bar at the top
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Search transport, e.g. Metro, Rajdhani... ',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.grey[100],
               ),
+              onChanged: (val) => setState(() => searchQuery = val),
             ),
             const SizedBox(height: 16),
+            // 2. City selection dropdowns in their own Card
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildDropdown("From", selectedFrom, (val) => setState(() => selectedFrom = val!)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildDropdown("To", selectedTo, (val) => setState(() => selectedTo = val!)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search transport, e.g. Metro, Rajdhani... ',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                      ),
-                      onChanged: (val) => setState(() => searchQuery = val),
-                    ),
+                    _buildDropdown("From", selectedFrom, (val) => setState(() => selectedFrom = val!)),
+                    const SizedBox(height: 24),
+                    _buildDropdown("To", selectedTo, (val) => setState(() => selectedTo = val!)),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
+            // 4. Transport options sections
             if (grouped.isEmpty)
               const Center(child: Text("No transport options available for this route.")),
             for (final type in grouped.keys)
               _buildTransportSection(type, grouped[type]!),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -169,19 +166,23 @@ class _TransportPageState extends State<TransportPage> {
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 200,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: options.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemBuilder: (context, index) {
-                final option = options[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: _buildTransportCard(option, color),
-                );
-              },
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: SizedBox(
+              height: 240,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: options.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                padding: const EdgeInsets.only(right: 16),
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: _buildTransportCard(option, color),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -193,7 +194,7 @@ class _TransportPageState extends State<TransportPage> {
   Widget _buildTransportCard(TransportInfo option, Color color) {
     return Container(
       width: 240,
-      constraints: const BoxConstraints(maxHeight: 180),
+      constraints: const BoxConstraints(maxHeight: 220),
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -217,8 +218,8 @@ class _TransportPageState extends State<TransportPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              Text('From: ${option.from}', style: const TextStyle(fontSize: 14)),
-              Text('To: ${option.to}', style: const TextStyle(fontSize: 14)),
+              Flexible(child: Text('From: ${option.from}', style: const TextStyle(fontSize: 14))),
+              Flexible(child: Text('To: ${option.to}', style: const TextStyle(fontSize: 14))),
               const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -328,37 +329,37 @@ class TransportInfo {
 }
 
 final List<TransportInfo> allTransportOptions = [
-  // Metro
+  // Metro (cheapest)
   TransportInfo(name: 'Delhi Metro – Blue Line', from: 'Delhi', to: 'Delhi', fare: '₹30', icon: Icons.tram, type: 'Metro'),
   TransportInfo(name: 'Bangalore Metro – Purple Line', from: 'Bengaluru', to: 'Bengaluru', fare: '₹25', icon: Icons.tram, type: 'Metro'),
-  TransportInfo(name: 'Mumbai Metro – Line 1', from: 'Mumbai', to: 'Mumbai', fare: '₹40', icon: Icons.tram, type: 'Metro'),
-  TransportInfo(name: 'Hyderabad Metro – Red Line', from: 'Hyderabad', to: 'Hyderabad', fare: '₹35', icon: Icons.tram, type: 'Metro'),
-  TransportInfo(name: 'Chennai Metro – Green Line', from: 'Chennai', to: 'Chennai', fare: '₹50', icon: Icons.tram, type: 'Metro'),
-  TransportInfo(name: 'Kolkata Metro – NS Line', from: 'Kolkata', to: 'Kolkata', fare: '₹20', icon: Icons.tram, type: 'Metro'),
-  // Train
-  TransportInfo(name: 'Chennai Express', from: 'Chennai', to: 'Mumbai', fare: '₹750', icon: Icons.train, type: 'Train'),
-  TransportInfo(name: 'Rajdhani Express', from: 'Mumbai', to: 'Delhi', fare: '₹2200', icon: Icons.train, type: 'Train'),
-  TransportInfo(name: 'Duronto Express', from: 'Kolkata', to: 'Hyderabad', fare: '₹1600', icon: Icons.train, type: 'Train'),
-  TransportInfo(name: 'Yeshvantpur Exp', from: 'Bengaluru', to: 'Chennai', fare: '₹600', icon: Icons.train, type: 'Train'),
-  TransportInfo(name: 'Shatabdi Express', from: 'Delhi', to: 'Bengaluru', fare: '₹1800', icon: Icons.train, type: 'Train'),
-  // Flight
-  TransportInfo(name: 'IndiGo 6E-445', from: 'Mumbai', to: 'Hyderabad', fare: '₹3500', icon: Icons.flight, type: 'Flight'),
-  TransportInfo(name: 'Air India AI-202', from: 'Delhi', to: 'Kolkata', fare: '₹4000', icon: Icons.flight, type: 'Flight'),
-  TransportInfo(name: 'SpiceJet SG-89', from: 'Bengaluru', to: 'Chennai', fare: '₹2800', icon: Icons.flight, type: 'Flight'),
-  TransportInfo(name: 'Vistara UK-107', from: 'Mumbai', to: 'Delhi', fare: '₹4500', icon: Icons.flight, type: 'Flight'),
-  TransportInfo(name: 'Go First G8-121', from: 'Hyderabad', to: 'Bengaluru', fare: '₹3200', icon: Icons.flight, type: 'Flight'),
-  // Bus
-  TransportInfo(name: 'MSRTC Shivneri', from: 'Mumbai', to: 'Pune', fare: '₹600', icon: Icons.directions_bus, type: 'Bus'),
-  TransportInfo(name: 'BMTC Volvo', from: 'Bengaluru', to: 'Mysuru', fare: '₹350', icon: Icons.directions_bus, type: 'Bus'),
-  TransportInfo(name: 'TSRTC Garuda', from: 'Hyderabad', to: 'Vijayawada', fare: '₹500', icon: Icons.directions_bus, type: 'Bus'),
-  TransportInfo(name: 'APSRTC Super Luxury', from: 'Vijayawada', to: 'Visakhapatnam', fare: '₹700', icon: Icons.directions_bus, type: 'Bus'),
-  TransportInfo(name: 'WBTC AC Bus', from: 'Kolkata', to: 'Durgapur', fare: '₹400', icon: Icons.directions_bus, type: 'Bus'),
-  // Cab
-  TransportInfo(name: 'Ola Mini', from: 'Mumbai', to: 'Nashik', fare: '₹2500', icon: Icons.local_taxi, type: 'Cab'),
-  TransportInfo(name: 'Uber Premier', from: 'Delhi', to: 'Agra', fare: '₹3200', icon: Icons.local_taxi, type: 'Cab'),
-  TransportInfo(name: 'Meru Cab', from: 'Bengaluru', to: 'Coimbatore', fare: '₹4200', icon: Icons.local_taxi, type: 'Cab'),
-  // Auto
-  TransportInfo(name: 'Auto Rickshaw', from: 'Mumbai', to: 'Mumbai', fare: '₹80', icon: Icons.electric_rickshaw, type: 'Auto'),
-  TransportInfo(name: 'Auto Rickshaw', from: 'Delhi', to: 'Delhi', fare: '₹70', icon: Icons.electric_rickshaw, type: 'Auto'),
-  TransportInfo(name: 'Auto Rickshaw', from: 'Chennai', to: 'Chennai', fare: '₹60', icon: Icons.electric_rickshaw, type: 'Auto'),
+  TransportInfo(name: 'Mumbai Metro – Line 1', from: 'Mumbai', to: 'Mumbai', fare: '₹35', icon: Icons.tram, type: 'Metro'),
+  TransportInfo(name: 'Hyderabad Metro – Red Line', from: 'Hyderabad', to: 'Hyderabad', fare: '₹28', icon: Icons.tram, type: 'Metro'),
+  TransportInfo(name: 'Chennai Metro – Green Line', from: 'Chennai', to: 'Chennai', fare: '₹32', icon: Icons.tram, type: 'Metro'),
+  TransportInfo(name: 'Kolkata Metro – NS Line', from: 'Kolkata', to: 'Kolkata', fare: '₹22', icon: Icons.tram, type: 'Metro'),
+  // Train (mid-high)
+  TransportInfo(name: 'Chennai Express', from: 'Chennai', to: 'Mumbai', fare: '₹1200', icon: Icons.train, type: 'Train'),
+  TransportInfo(name: 'Rajdhani Express', from: 'Mumbai', to: 'Delhi', fare: '₹2500', icon: Icons.train, type: 'Train'),
+  TransportInfo(name: 'Duronto Express', from: 'Kolkata', to: 'Hyderabad', fare: '₹1800', icon: Icons.train, type: 'Train'),
+  TransportInfo(name: 'Yeshvantpur Exp', from: 'Bengaluru', to: 'Chennai', fare: '₹950', icon: Icons.train, type: 'Train'),
+  TransportInfo(name: 'Shatabdi Express', from: 'Delhi', to: 'Bengaluru', fare: '₹2100', icon: Icons.train, type: 'Train'),
+  // Flight (most expensive)
+  TransportInfo(name: 'IndiGo 6E-445', from: 'Mumbai', to: 'Hyderabad', fare: '₹5200', icon: Icons.flight, type: 'Flight'),
+  TransportInfo(name: 'Air India AI-202', from: 'Delhi', to: 'Kolkata', fare: '₹6700', icon: Icons.flight, type: 'Flight'),
+  TransportInfo(name: 'SpiceJet SG-89', from: 'Bengaluru', to: 'Chennai', fare: '₹4800', icon: Icons.flight, type: 'Flight'),
+  TransportInfo(name: 'Vistara UK-107', from: 'Mumbai', to: 'Delhi', fare: '₹7500', icon: Icons.flight, type: 'Flight'),
+  TransportInfo(name: 'Go First G8-121', from: 'Hyderabad', to: 'Bengaluru', fare: '₹4100', icon: Icons.flight, type: 'Flight'),
+  // Bus (cheap)
+  TransportInfo(name: 'MSRTC Shivneri', from: 'Mumbai', to: 'Pune', fare: '₹350', icon: Icons.directions_bus, type: 'Bus'),
+  TransportInfo(name: 'BMTC Volvo', from: 'Bengaluru', to: 'Mysuru', fare: '₹220', icon: Icons.directions_bus, type: 'Bus'),
+  TransportInfo(name: 'TSRTC Garuda', from: 'Hyderabad', to: 'Vijayawada', fare: '₹280', icon: Icons.directions_bus, type: 'Bus'),
+  TransportInfo(name: 'APSRTC Super Luxury', from: 'Vijayawada', to: 'Visakhapatnam', fare: '₹400', icon: Icons.directions_bus, type: 'Bus'),
+  TransportInfo(name: 'WBTC AC Bus', from: 'Kolkata', to: 'Durgapur', fare: '₹320', icon: Icons.directions_bus, type: 'Bus'),
+  // Cab (expensive, but less than flight)
+  TransportInfo(name: 'Ola Mini', from: 'Mumbai', to: 'Nashik', fare: '₹2600', icon: Icons.local_taxi, type: 'Cab'),
+  TransportInfo(name: 'Uber Premier', from: 'Delhi', to: 'Agra', fare: '₹3100', icon: Icons.local_taxi, type: 'Cab'),
+  TransportInfo(name: 'Meru Cab', from: 'Bengaluru', to: 'Coimbatore', fare: '₹3900', icon: Icons.local_taxi, type: 'Cab'),
+  // Auto (cheapest local)
+  TransportInfo(name: 'Auto Rickshaw', from: 'Mumbai', to: 'Mumbai', fare: '₹90', icon: Icons.electric_rickshaw, type: 'Auto'),
+  TransportInfo(name: 'Auto Rickshaw', from: 'Delhi', to: 'Delhi', fare: '₹80', icon: Icons.electric_rickshaw, type: 'Auto'),
+  TransportInfo(name: 'Auto Rickshaw', from: 'Chennai', to: 'Chennai', fare: '₹70', icon: Icons.electric_rickshaw, type: 'Auto'),
 ];
