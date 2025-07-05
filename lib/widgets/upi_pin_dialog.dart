@@ -85,7 +85,9 @@ class _UpiPinDialogState extends State<UpiPinDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () { if (mounted) Navigator.of(context).pop(false); },
+          onPressed: () {
+            if (mounted) Navigator.of(context).pop(false);
+          },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -95,4 +97,4 @@ class _UpiPinDialogState extends State<UpiPinDialog> {
       ],
     );
   }
-} 
+}

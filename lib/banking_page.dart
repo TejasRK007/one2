@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'widgets/upi_pin_dialog.dart';
+import 'account_details_page.dart';
 import 'dart:math';
 
-class BankingPage extends StatelessWidget {
+class BankingPage extends StatefulWidget {
   final String phone;
   final String username;
   final String email;
@@ -23,111 +24,274 @@ class BankingPage extends StatelessWidget {
     this.cardUID,
   });
 
-  void _askPin(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => UpiPinDialog(
-        currentPin: upiPin,
-        onPinVerified: (_) async {
-          Navigator.of(dialogContext).pop();
-          final ref = FirebaseDatabase.instance.ref().child('users/$phone');
-          final balanceSnapshot = await ref.child('balance').get();
-          final balance = balanceSnapshot.exists ? double.tryParse(balanceSnapshot.value.toString()) ?? 0.0 : 0.0;
-          final emiSnapshot = await ref.child('emis').get();
-          int emiCount = 0;
-          String emiDetails = '';
-          if (emiSnapshot.exists && emiSnapshot.value != null) {
-            if (emiSnapshot.value is Map) {
-              final emis = Map<String, dynamic>.from(emiSnapshot.value as Map);
-              emiCount = emis.length;
-              emiDetails = emis.entries.map((e) {
-                final v = e.value;
-                if (v is Map && v['amount'] != null && v['dueDate'] != null) {
-                  return '₹${v['amount']} due on ${v['dueDate']}';
-                } else if (v is Map && v['amount'] != null) {
-                  return '₹${v['amount']}';
-                } else if (v is String) {
-                  return v;
-                } else {
-                  return 'EMI';
-                }
-              }).join('\n');
-            } else if (emiSnapshot.value is List) {
-              final emis = List.from(emiSnapshot.value as List);
-              emiCount = emis.length;
-              emiDetails = emis.map((v) {
-                if (v is Map && v['amount'] != null && v['dueDate'] != null) {
-                  return '₹${v['amount']} due on ${v['dueDate']}';
-                } else if (v is Map && v['amount'] != null) {
-                  return '₹${v['amount']}';
-                } else if (v is String) {
-                  return v;
-                } else {
-                  return 'EMI';
-                }
-              }).join('\n');
-            }
-          }
-          final random = Random();
-          final accountNumber = List.generate(10, (_) => random.nextInt(10)).join();
-          _showBankDetails(context, balance, accountNumber, emiCount, emiDetails);
-        },
-        onPinSet: onPinSet,
-      ),
-    );
-  }
+  @override
+  State<BankingPage> createState() => _BankingPageState();
+}
 
-  void _showBankDetails(BuildContext context, double balance, String accountNumber, int emiCount, String emiDetails) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Bank Account Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Account Name: $username"),
-            const SizedBox(height: 8),
-            Text("Account No: $accountNumber"),
-            const SizedBox(height: 8),
-            Text("Phone: $phone"),
-            const SizedBox(height: 8),
-            Text("Linked Card: " + (cardUID != null && cardUID!.isNotEmpty ? cardUID! : 'No card linked')),
-            const SizedBox(height: 8),
-            Text("Branch: India Main"),
-            const SizedBox(height: 8),
-            Text("Balance: ₹${balance.toStringAsFixed(2)}"),
-            const SizedBox(height: 16),
-            Text("EMIs/Instalments Pending: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(emiCount > 0 ? emiCount.toString() : '0', style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (emiCount > 0) ...[
-              const SizedBox(height: 8),
-              Text(emiDetails),
-            ] else ...[
-              const SizedBox(height: 8),
-              const Text("No EMIs or instalments pending."),
-            ],
-          ],
+class _BankingPageState extends State<BankingPage> {
+  bool isLoading = false;
+
+  void _askPin(BuildContext context) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Check if UPI PIN is set
+    if (widget.upiPin == null || widget.upiPin!.isEmpty) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please set a UPI PIN first in Settings'),
+          backgroundColor: Colors.orange,
         ),
-        actions: [
-          TextButton(
-            child: const Text("Close"),
-            onPressed: () => Navigator.pop(context),
+      );
+      return;
+    }
+
+    final pinVerified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (dialogContext) => UpiPinDialog(
+            currentPin: widget.upiPin,
+            onPinVerified: (_) {
+              Navigator.of(dialogContext).pop(true);
+            },
+            onPinSet: widget.onPinSet,
           ),
-        ],
-      ),
     );
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (pinVerified == true) {
+      // Navigate to account details page after successful PIN verification
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => AccountDetailsPage(
+                phone: widget.phone,
+                username: widget.username,
+                email: widget.email,
+                password: widget.password,
+                cardUID: widget.cardUID,
+              ),
+        ),
+      );
+    } else if (pinVerified == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Incorrect PIN. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Banking")),
-      body: Center(
-        child: ElevatedButton.icon(
-          onPressed: () => _askPin(context),
-          icon: const Icon(Icons.lock),
-          label: const Text("Access My Bank"),
+      appBar: AppBar(
+        title: const Text(
+          "Access Bank",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E3A8A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Bank Icon
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Title
+                const Text(
+                  'ACCESS BANK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Secure Banking Access',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 48),
+
+                // Access Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : () => _askPin(context),
+                    icon:
+                        isLoading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Icon(Icons.lock, size: 24),
+                    label: Text(
+                      isLoading ? 'Verifying...' : 'View Account Details',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF1E3A8A),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 8,
+                      shadowColor: Colors.black.withOpacity(0.3),
+                    ),
+                  ),
+                ),
+
+                // Set UPI PIN Button (if not set)
+                if (widget.upiPin == null || widget.upiPin!.isEmpty) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final pinSet = await showDialog<bool>(
+                          context: context,
+                          barrierDismissible: false,
+                          builder:
+                              (dialogContext) => UpiPinDialog(
+                                currentPin: null,
+                                onPinVerified: (_) {},
+                                onPinSet: (pin) {
+                                  widget.onPinSet?.call(pin);
+                                  Navigator.of(dialogContext).pop(true);
+                                },
+                              ),
+                        );
+                        if (pinSet == true) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'UPI PIN set successfully! You can now access your bank account.',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.pin, size: 20),
+                      label: const Text(
+                        'Set UPI PIN First',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // Security Note
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.security,
+                            color: Colors.white.withOpacity(0.8),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Secure Banking Access',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.upiPin != null && widget.upiPin!.isNotEmpty
+                            ? 'Your account details are protected with UPI PIN'
+                            : 'Set a UPI PIN to access your bank account securely',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

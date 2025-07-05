@@ -58,7 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _fetchCardUID() async {
-    final userRef = FirebaseDatabase.instance.ref('users/${widget.phone}/cardUID');
+    final userRef = FirebaseDatabase.instance.ref(
+      'users/${widget.phone}/cardUID',
+    );
     final snapshot = await userRef.get();
     if (snapshot.exists) {
       setState(() {
@@ -151,7 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('One Card One Nation', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'One Card One Nation',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: Stack(
             children: [
@@ -161,31 +166,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 top: 0,
                 child: Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
-                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                  child: const Text('1', style: TextStyle(color: Colors.white, fontSize: 10)), // TODO: Replace with unread count
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 14,
+                    minHeight: 14,
+                  ),
+                  child: const Text(
+                    '1',
+                    style: TextStyle(color: Colors.white, fontSize: 10),
+                  ), // TODO: Replace with unread count
                 ),
               ),
             ],
           ),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationCenterPage(
-              phone: widget.phone,
-              username: widget.username,
-              email: widget.email,
-              password: widget.password,
-            )));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => NotificationCenterPage(
+                      phone: widget.phone,
+                      username: widget.username,
+                      email: widget.email,
+                      password: widget.password,
+                    ),
+              ),
+            );
           },
         ),
         actions: [
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(
-                username: widget.username,
-                email: widget.email,
-                phone: widget.phone,
-                password: widget.password,
-              )));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => ProfilePage(
+                        username: widget.username,
+                        email: widget.email,
+                        phone: widget.phone,
+                        password: widget.password,
+                      ),
+                ),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -206,7 +232,10 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: 'QR'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.qr_code_scanner),
+            label: 'QR',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.redeem), label: 'Rewards'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
@@ -266,7 +295,9 @@ class HomePageContent extends StatelessWidget {
             const SizedBox(height: 25),
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -274,7 +305,10 @@ class HomePageContent extends StatelessWidget {
                   children: [
                     const Text(
                       'Your Services',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Wrap(
@@ -310,6 +344,7 @@ class HomePageContent extends StatelessWidget {
                                 password: password,
                                 upiPin: upiPin,
                                 onPinSet: onPinSet,
+                                cardUID: cardUID,
                               ),
                             );
                           },
@@ -357,7 +392,9 @@ class HomePageContent extends StatelessWidget {
             const SizedBox(height: 25),
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -365,13 +402,18 @@ class HomePageContent extends StatelessWidget {
                   children: [
                     const Text(
                       'Wallet',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Center(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final buttonWidth = (constraints.maxWidth - 3 * 12) / 2; // 2 per row, 12px spacing
+                          final buttonWidth =
+                              (constraints.maxWidth - 3 * 12) /
+                              2; // 2 per row, 12px spacing
                           return Wrap(
                             spacing: 12,
                             runSpacing: 18,
@@ -386,12 +428,13 @@ class HomePageContent extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => BalancePage(
-                                          phone: phone,
-                                          username: username,
-                                          email: email,
-                                          password: password,
-                                        ),
+                                        builder:
+                                            (_) => BalancePage(
+                                              phone: phone,
+                                              username: username,
+                                              email: email,
+                                              password: password,
+                                            ),
                                       ),
                                     );
                                   },
@@ -406,14 +449,15 @@ class HomePageContent extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => RechargePage(
-                                          phone: phone,
-                                          username: username,
-                                          email: email,
-                                          password: password,
-                                          upiPin: upiPin,
-                                          onPinSet: onPinSet,
-                                        ),
+                                        builder:
+                                            (_) => RechargePage(
+                                              phone: phone,
+                                              username: username,
+                                              email: email,
+                                              password: password,
+                                              upiPin: upiPin,
+                                              onPinSet: onPinSet,
+                                            ),
                                       ),
                                     );
                                   },
@@ -428,14 +472,15 @@ class HomePageContent extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => MobileRechargePage(
-                                          phone: phone,
-                                          username: username,
-                                          email: email,
-                                          password: password,
-                                          upiPin: upiPin,
-                                          onPinSet: onPinSet,
-                                        ),
+                                        builder:
+                                            (_) => MobileRechargePage(
+                                              phone: phone,
+                                              username: username,
+                                              email: email,
+                                              password: password,
+                                              upiPin: upiPin,
+                                              onPinSet: onPinSet,
+                                            ),
                                       ),
                                     );
                                   },
@@ -450,14 +495,15 @@ class HomePageContent extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => WifiRechargePage(
-                                          phone: phone,
-                                          username: username,
-                                          email: email,
-                                          password: password,
-                                          upiPin: upiPin,
-                                          onPinSet: onPinSet,
-                                        ),
+                                        builder:
+                                            (_) => WifiRechargePage(
+                                              phone: phone,
+                                              username: username,
+                                              email: email,
+                                              password: password,
+                                              upiPin: upiPin,
+                                              onPinSet: onPinSet,
+                                            ),
                                       ),
                                     );
                                   },
@@ -475,7 +521,9 @@ class HomePageContent extends StatelessWidget {
             const SizedBox(height: 25),
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -483,7 +531,10 @@ class HomePageContent extends StatelessWidget {
                   children: [
                     const Text(
                       'Quick Actions',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Wrap(
@@ -498,13 +549,14 @@ class HomePageContent extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => QRScanPage(
-                                  username: username,
-                                  email: email,
-                                  phone: phone,
-                                  password: password,
-                                  upiPin: upiPin,
-                                ),
+                                builder:
+                                    (_) => QRScanPage(
+                                      username: username,
+                                      email: email,
+                                      phone: phone,
+                                      password: password,
+                                      upiPin: upiPin,
+                                    ),
                               ),
                             );
                           },
@@ -516,12 +568,13 @@ class HomePageContent extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => RewardsPage(
-                                  phone: phone,
-                                  username: username,
-                                  email: email,
-                                  password: password,
-                                ),
+                                builder:
+                                    (_) => RewardsPage(
+                                      phone: phone,
+                                      username: username,
+                                      email: email,
+                                      password: password,
+                                    ),
                               ),
                             );
                           },
@@ -533,12 +586,13 @@ class HomePageContent extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => HistoryPage(
-                                  phone: phone,
-                                  username: username,
-                                  email: email,
-                                  password: password,
-                                ),
+                                builder:
+                                    (_) => HistoryPage(
+                                      phone: phone,
+                                      username: username,
+                                      email: email,
+                                      password: password,
+                                    ),
                               ),
                             );
                           },
@@ -550,18 +604,19 @@ class HomePageContent extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => SettingsPage(
-                                  phone: phone,
-                                  username: username,
-                                  email: email,
-                                  password: password,
-                                  isDarkMode: isDarkMode,
-                                  onThemeChanged: onThemeChanged,
-                                  upiPin: upiPin,
-                                  onPinSet: onPinSet,
-                                  cardUID: cardUID,
-                                  onCardLinked: onCardLinked,
-                                ),
+                                builder:
+                                    (_) => SettingsPage(
+                                      phone: phone,
+                                      username: username,
+                                      email: email,
+                                      password: password,
+                                      isDarkMode: isDarkMode,
+                                      onThemeChanged: onThemeChanged,
+                                      upiPin: upiPin,
+                                      onPinSet: onPinSet,
+                                      cardUID: cardUID,
+                                      onCardLinked: onCardLinked,
+                                    ),
                               ),
                             );
                           },
@@ -583,7 +638,11 @@ class _HomeSectionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _HomeSectionButton({required this.icon, required this.label, required this.onTap});
+  const _HomeSectionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -611,7 +670,11 @@ class _HomeSectionButton extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.indigo),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.indigo,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -620,6 +683,3 @@ class _HomeSectionButton extends StatelessWidget {
     );
   }
 }
-
-
-
